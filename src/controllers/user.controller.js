@@ -33,22 +33,30 @@ const registerUser = asyncHandler( async(req,res) => {
         throw new ApiError(409, "Username or email already exists");
     }
     //console.log(req.files);
+
     const avatarLocalPath = req.files?.avatar[0]?.path;
-    const coverImageLocalPath = req.files?.coverImage[0]?.path;
+    //const coverImageLocalPath = req.files?.coverImage[0]?.path; //raises error whe n data is not passed.
+
+    let coverImageLocalPath;
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
+        coverImageLocalPath = req.files.coverImage[0].path;
+    }
 
     if (!avatarLocalPath){
         throw new ApiError(400,"Avatar file is required in local.")
     }
 
     const avatar = await uploadOnCloudinary(avatarLocalPath);
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath);
     //console.log(avatar);
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+    console.log(coverImage);
+
     if (!avatar){
         throw new ApiError(400,"Avatar file is required")
     }
-    if (!coverImage){
-        throw new ApiError(400,"Avatar file is required")
-    }
+    // if (!coverImage){
+    //     throw new ApiError(400,"coverImage file is required")
+    // }
 
     const user = await User.create({
         fullname,
@@ -58,7 +66,9 @@ const registerUser = asyncHandler( async(req,res) => {
         password,
         username: username.toLowerCase()
     })
-    console.log("Password: ",user.password);
+
+    //console.log("Password: ",user.password); //displays the encrypted password.
+
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     );
